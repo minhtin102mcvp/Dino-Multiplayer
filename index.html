@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino LAN Multiplayer - Pro Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js" type="module"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background-color: #f7f7f7; }
+        canvas { display: block; background-color: #fff; border-bottom: 2px solid #535353; width: 100%; height: 100%; }
+        .pixel-font { font-family: 'Courier New', Courier, monospace; }
+        #weather-overlay { pointer-events: none; position: absolute; inset: 0; z-index: 5; transition: background 2s; }
+        .powerup-active { border: 2px solid gold; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div id="ui-container" class="relative bg-white shadow-2xl rounded-lg overflow-hidden w-full max-w-4xl aspect-[16/9] flex flex-col">
+        
+        <!-- Weather Overlay -->
+        <div id="weather-overlay"></div>
+
+        <!-- Main Menu -->
+        <div id="menu-screen" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white p-8">
+            <h1 class="text-5xl font-bold mb-8 text-gray-800 flex items-center gap-4">
+                🦖 Dino Battle LAN
+            </h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl">
+                <button onclick="startGame('single')" class="p-6 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-105">
+                    <span class="text-2xl font-bold block">Chơi Đơn</span>
+                </button>
+                <button onclick="showScreen('create-room-screen')" class="p-6 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-105">
+                    <span class="text-2xl font-bold block">Tạo Server</span>
+                </button>
+                <button onclick="listRooms()" class="p-6 bg-purple-500 hover:bg-purple-600 text-white rounded-xl shadow-lg transition-all transform hover:scale-105">
+                    <span class="text-2xl font-bold block">Tìm Server</span>
+                </button>
+            </div>
+
+            <div class="mt-8 flex gap-4">
+                <button onclick="showScreen('settings-screen')" class="px-6 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition">Tùy chỉnh & Phím tắt</button>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white p-8">
+            <h2 class="text-3xl font-bold mb-6">Cài đặt phím & Dino</h2>
+            <div class="w-full max-w-md space-y-4">
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700">Tên</label>
+                        <input type="text" id="dino-name" value="Dino Pro" class="mt-1 block w-full px-4 py-2 border rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Màu</label>
+                        <input type="color" id="dino-color" value="#535353" class="mt-1 block w-full h-10 p-1 border rounded-md">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phím Nhảy</label>
+                        <button id="jump-key-btn" class="mt-1 w-full px-4 py-2 bg-gray-100 border-2 border-dashed rounded-md">Space</button>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phím Tấn Công</label>
+                        <button id="attack-key-btn" class="mt-1 w-full px-4 py-2 bg-gray-100 border-2 border-dashed rounded-md">f</button>
+                    </div>
+                </div>
+            </div>
+            <button onclick="saveSettings()" class="mt-8 px-10 py-3 bg-blue-600 text-white font-bold rounded-lg">Lưu cài đặt</button>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div id="create-room-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white p-8">
+            <h2 class="text-3xl font-bold mb-6">Tạo Server</h2>
+            <div class="w-full max-w-sm space-y-4">
+                <input type="text" id="room-name" placeholder="Tên server" class="w-full px-4 py-2 border rounded-md">
+                <input type="password" id="room-pass" placeholder="Mật khẩu (không bắt buộc)" class="w-full px-4 py-2 border rounded-md">
+                <button onclick="handleCreateRoom()" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg">Mở Server</button>
+            </div>
+            <button onclick="showScreen('menu-screen')" class="mt-4 text-gray-500 hover:underline">Hủy</button>
+        </div>
+
+        <!-- Room List Screen -->
+        <div id="rooms-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white p-8">
+            <h2 class="text-3xl font-bold mb-6">Server đang online</h2>
+            <div id="room-list" class="w-full max-w-lg h-64 overflow-y-auto border rounded-lg p-2 space-y-2 mb-4 bg-gray-50"></div>
+            <button onclick="showScreen('menu-screen')" class="px-6 py-2 border rounded hover:bg-gray-100">Quay lại</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-container" class="relative flex-grow flex flex-col hidden">
+            <div class="flex justify-between items-center p-4 bg-gray-50 border-b relative z-10">
+                <div id="game-status" class="font-bold text-gray-700">Phòng: Đang chờ...</div>
+                <div id="live-leaderboard" class="flex gap-4 text-sm font-mono text-blue-600"></div>
+                <div class="flex gap-4 items-center">
+                    <div id="active-powerup" class="text-xl"></div>
+                    <div class="text-2xl font-mono" id="score-display">00000</div>
+                </div>
+            </div>
+            <div class="relative flex-grow bg-white overflow-hidden">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+            <div id="game-over-overlay" class="hidden absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-50">
+                <h2 class="text-white text-5xl font-black mb-4">THUA RỒI!</h2>
+                <div id="final-stats" class="text-white mb-6 text-center"></div>
+                <button onclick="restartGame()" class="px-8 py-3 bg-white text-black font-bold rounded-lg mb-2">Chơi Lại</button>
+                <button onclick="exitGame()" class="text-white/70 underline">Thoát Menu</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+  apiKey: "AIzaSyCP12lFX-vh7hI1Cr5VVf09sb7q1S2U2_c",
+  authDomain: "dino-multiplayer-c62b5.firebaseapp.com",
+  projectId: "dino-multiplayer-c62b5",
+  storageBucket: "dino-multiplayer-c62b5.firebasestorage.app",
+  messagingSenderId: "25655717120",
+  appId: "1:25655717120:web:12aa999f4bb162546417e5",
+  measurementId: "G-XD5GP5HT2Q"
+};
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dino-pro-v1';
+
+        // --- States ---
+        let user = null;
+        let currentRoomId = null;
+        let dinoSettings = { name: "Dino Pro", color: "#535353", jumpKey: " ", attackKey: "f" };
+        let otherPlayers = {};
+        let projectiles = [];
+        let items = [];
+        let weather = 'sunny'; // sunny, rainy, sandstorm
+        let weatherParticles = [];
+
+        // --- Constants ---
+        const GRAVITY = 0.6;
+        const JUMP_FORCE = -12;
+        const GROUND_Y = 180;
+        let gameSpeed = 6;
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+
+        class Dino {
+            constructor(name, color, isLocal = false) {
+                this.name = name;
+                this.color = color;
+                this.isLocal = isLocal;
+                this.width = 44; this.height = 47;
+                this.x = 80; this.y = GROUND_Y - this.height;
+                this.dy = 0;
+                this.isJumping = false;
+                this.score = 0;
+                this.isAlive = true;
+                this.shield = 0; // Frames of shield
+                this.flash = 0;  // Frames of flash speed
+                this.lastAttack = 0;
+            }
+
+            jump() {
+                if (!this.isJumping && this.isAlive) {
+                    this.dy = JUMP_FORCE;
+                    this.isJumping = true;
+                }
+            }
+
+            attack() {
+                const now = Date.now();
+                if (this.isAlive && now - this.lastAttack > 2000) { // Cooldown 2s
+                    this.lastAttack = now;
+                    const proj = { x: this.x + 50, y: this.y + 20, owner: user.uid };
+                    if (currentRoomId) {
+                        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'projectiles'), proj);
+                    } else {
+                        projectiles.push({...proj, local: true});
+                    }
+                }
+            }
+
+            update() {
+                if (!this.isAlive) return;
+                this.dy += GRAVITY;
+                this.y += this.dy;
+                if (this.y > GROUND_Y - this.height) {
+                    this.y = GROUND_Y - this.height;
+                    this.dy = 0; this.isJumping = false;
+                }
+                if (this.shield > 0) this.shield--;
+                if (this.flash > 0) {
+                    this.flash--;
+                    this.score += 0.5; // Bonus score during flash
+                } else {
+                    this.score += 0.1;
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.fillStyle = this.color;
+                if (!this.isLocal) ctx.globalAlpha = 0.5;
+
+                // Shield Effect
+                if (this.shield > 0) {
+                    ctx.strokeStyle = "gold";
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width/2, this.y + this.height/2, 40, 0, Math.PI*2);
+                    ctx.stroke();
+                }
+
+                // Flash Effect
+                if (this.flash > 0) {
+                    ctx.fillStyle = "cyan";
+                    ctx.fillRect(this.x - 10, this.y + 10, 5, 20);
+                }
+
+                ctx.font = "bold 12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(this.name, this.x + this.width/2, this.y - 15);
+
+                // Simple Dino Body
+                ctx.fillRect(this.x + 20, this.y, 24, 15);
+                ctx.fillRect(this.x, this.y + 15, 35, 20);
+                ctx.fillRect(this.x + 10, this.y + 35, 5, 12);
+                ctx.fillRect(this.x + 25, this.y + 35, 5, 12);
+                ctx.fillStyle = "white";
+                ctx.fillRect(this.x + 35, this.y + 4, 4, 4);
+                ctx.restore();
+            }
+        }
+
+        class Item {
+            constructor(x, type) {
+                this.x = x;
+                this.type = type; // shield, magnet, flash
+                this.width = 30; this.height = 30;
+                this.y = GROUND_Y - 80 - Math.random() * 50;
+            }
+            update() { this.x -= gameSpeed; }
+            draw(ctx) {
+                const colors = { shield: 'gold', magnet: 'red', flash: 'cyan' };
+                const icons = { shield: '🛡️', magnet: '🧲', flash: '⚡' };
+                ctx.font = "20px serif";
+                ctx.fillText(icons[this.type], this.x, this.y);
+            }
+        }
+
+        let localDino;
+        let obstacles = [];
+        let score = 0;
+        let lastObstacleTime = 0;
+        let lastItemTime = 0;
+
+        // --- Game Logic ---
+
+        async function init() {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+            onAuthStateChanged(auth, u => user = u);
+
+            const saved = localStorage.getItem('dino_settings_pro');
+            if (saved) {
+                dinoSettings = JSON.parse(saved);
+                document.getElementById('dino-name').value = dinoSettings.name;
+                document.getElementById('dino-color').value = dinoSettings.color;
+                document.getElementById('jump-key-btn').innerText = dinoSettings.jumpKey === " " ? "Space" : dinoSettings.jumpKey;
+                document.getElementById('attack-key-btn').innerText = dinoSettings.attackKey;
+            }
+        }
+
+        window.showScreen = (id) => {
+            ['menu-screen', 'settings-screen', 'create-room-screen', 'rooms-screen', 'game-container'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        };
+
+        window.saveSettings = () => {
+            dinoSettings.name = document.getElementById('dino-name').value;
+            dinoSettings.color = document.getElementById('dino-color').value;
+            localStorage.setItem('dino_settings_pro', JSON.stringify(dinoSettings));
+            showScreen('menu-screen');
+        };
+
+        // Key capture
+        const setupKey = (btnId, keyRef) => {
+            document.getElementById(btnId).onclick = function() {
+                this.innerText = "...";
+                const h = (e) => {
+                    e.preventDefault();
+                    dinoSettings[keyRef] = e.key;
+                    this.innerText = e.key === " " ? "Space" : e.key;
+                    window.removeEventListener('keydown', h);
+                };
+                window.addEventListener('keydown', h);
+            };
+        };
+        setupKey('jump-key-btn', 'jumpKey');
+        setupKey('attack-key-btn', 'attackKey');
+
+        function updateWeather() {
+            const chance = Math.random();
+            const overlay = document.getElementById('weather-overlay');
+            if (chance < 0.001) {
+                weather = 'rainy';
+                overlay.style.background = "rgba(0, 0, 50, 0.1)";
+            } else if (chance < 0.002) {
+                weather = 'sandstorm';
+                overlay.style.background = "rgba(100, 50, 0, 0.1)";
+            } else if (chance < 0.0005) {
+                weather = 'sunny';
+                overlay.style.background = "transparent";
+            }
+        }
+
+        function drawWeather() {
+            if (weather === 'rainy') {
+                ctx.strokeStyle = "rgba(0,0,200,0.4)";
+                for(let i=0; i<10; i++) {
+                    const x = Math.random()*canvas.width;
+                    const y = Math.random()*canvas.height;
+                    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x-5, y+15); ctx.stroke();
+                }
+            } else if (weather === 'sandstorm') {
+                ctx.fillStyle = "rgba(150,100,50,0.2)";
+                for(let i=0; i<30; i++) {
+                    ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+                }
+            }
+        }
+
+        window.startGame = (mode) => {
+            showScreen('game-container');
+            resetEngine();
+            if(mode === 'single') currentRoomId = null;
+            loop();
+        };
+
+        function resetEngine() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            localDino = new Dino(dinoSettings.name, dinoSettings.color, true);
+            obstacles = []; items = []; projectiles = [];
+            gameSpeed = 6;
+            document.getElementById('game-over-overlay').classList.add('hidden');
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateWeather();
+            drawWeather();
+
+            // Ground
+            ctx.fillStyle = "#535353";
+            ctx.fillRect(0, GROUND_Y, canvas.width, 2);
+
+            // Spawn Obstacles
+            if (Date.now() - lastObstacleTime > 1500 - (gameSpeed*50)) {
+                obstacles.push({ x: canvas.width, w: 20 + Math.random()*20, h: 30 + Math.random()*30 });
+                lastObstacleTime = Date.now();
+            }
+
+            // Spawn Items
+            if (Date.now() - lastItemTime > 5000) {
+                const types = ['shield', 'flash', 'magnet'];
+                items.push(new Item(canvas.width, types[Math.floor(Math.random()*3)]));
+                lastItemTime = Date.now();
+            }
+
+            // Update & Draw Obstacles
+            obstacles.forEach((o, i) => {
+                o.x -= gameSpeed;
+                ctx.fillStyle = "#535353";
+                ctx.fillRect(o.x, GROUND_Y - o.h, o.w, o.h);
+                // Collision
+                if (localDino.isAlive && localDino.x < o.x + o.w && localDino.x + localDino.width > o.x && localDino.y + localDino.height > GROUND_Y - o.h) {
+                    if (localDino.shield > 0) {
+                        localDino.shield = 0; // Consume shield
+                        obstacles.splice(i, 1);
+                    } else {
+                        endGame();
+                    }
+                }
+            });
+
+            // Update & Draw Items
+            items.forEach((it, i) => {
+                it.update(); it.draw(ctx);
+                if (localDino.x < it.x + it.width && localDino.x + localDino.width > it.x && localDino.y < it.y + it.height && localDino.y + localDino.height > it.y) {
+                    applyItem(it.type);
+                    items.splice(i, 1);
+                }
+            });
+
+            // Projectiles (Battle Mode)
+            projectiles.forEach((p, i) => {
+                p.x += (p.owner === user?.uid ? 10 : -10); // Own goes right, others go left
+                ctx.fillStyle = "red";
+                ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI*2); ctx.fill();
+                
+                // Hit check (others hit local)
+                if (p.owner !== user?.uid && localDino.isAlive && localDino.x < p.x + 8 && localDino.x + localDino.width > p.x - 8 && localDino.y < p.y + 8 && localDino.y + localDino.height > p.y - 8) {
+                    if (localDino.shield > 0) { localDino.shield = 0; } else { endGame(); }
+                    projectiles.splice(i, 1);
+                }
+            });
+
+            if (currentRoomId) syncData();
+            
+            // Draw Other Players
+            Object.values(otherPlayers).forEach(p => {
+                if (p.uid === user.uid) return;
+                const d = new Dino(p.name, p.color); d.y = p.y; d.shield = p.shield; d.draw(ctx);
+            });
+
+            localDino.update();
+            localDino.draw(ctx);
+
+            score = Math.floor(localDino.score);
+            document.getElementById('score-display').innerText = score.toString().padStart(5, '0');
+            gameSpeed += 0.0005;
+            if (localDino.isAlive) animationId = requestAnimationFrame(loop);
+        }
+
+        function applyItem(type) {
+            const indicator = document.getElementById('active-powerup');
+            if (type === 'shield') { localDino.shield = 300; indicator.innerText = "🛡️ Active!"; }
+            if (type === 'flash') { localDino.flash = 200; indicator.innerText = "⚡ Turbo!"; }
+            setTimeout(() => indicator.innerText = "", 3000);
+        }
+
+        async function syncData() {
+            const r = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'players', user.uid);
+            setDoc(r, { uid: user.uid, name: localDino.name, color: localDino.color, y: localDino.y, score, shield: localDino.shield, isAlive: localDino.isAlive }, {merge: true});
+        }
+
+        function endGame() {
+            localDino.isAlive = false;
+            document.getElementById('game-over-overlay').classList.remove('hidden');
+            document.getElementById('final-stats').innerHTML = `Điểm cuối: <span class="text-3xl text-yellow-400">${score}</span>`;
+            if (currentRoomId) syncData();
+        }
+
+        window.restartGame = () => { resetEngine(); loop(); };
+        window.exitGame = () => { location.reload(); };
+
+        // --- Multiplayer Handlers ---
+
+        window.handleCreateRoom = async () => {
+            const name = document.getElementById('room-name').value || "Server Pro";
+            const pass = document.getElementById('room-pass').value;
+            const ref = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), { name, pass, createdAt: serverTimestamp() });
+            currentRoomId = ref.id;
+            setupMultiplayer();
+        };
+
+        window.listRooms = () => {
+            showScreen('rooms-screen');
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), snap => {
+                const list = document.getElementById('room-list'); list.innerHTML = "";
+                snap.forEach(d => {
+                    const data = d.data();
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between bg-white p-3 rounded border";
+                    div.innerHTML = `<span>${data.name}</span> <button onclick="joinRoom('${d.id}', '${data.pass}')" class="bg-blue-500 text-white px-3 rounded">Vào</button>`;
+                    list.appendChild(div);
+                });
+            });
+        };
+
+        window.joinRoom = (id, pass) => {
+            if (pass && prompt("Mật khẩu:") !== pass) return;
+            currentRoomId = id;
+            setupMultiplayer();
+        };
+
+        function setupMultiplayer() {
+            showScreen('game-container');
+            resetEngine();
+            // Listen players
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'players'), snap => {
+                let lead = "";
+                const arr = [];
+                snap.forEach(d => { otherPlayers[d.id] = d.data(); arr.push(d.data()); });
+                arr.sort((a,b) => b.score - a.score).slice(0, 3).forEach((p, i) => lead += `[#${i+1} ${p.name}: ${p.score}] `);
+                document.getElementById('live-leaderboard').innerText = lead;
+            });
+            // Listen projectiles
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'projectiles'), snap => {
+                snap.docChanges().forEach(change => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        if (data.owner !== user.uid) projectiles.push(data);
+                    }
+                });
+            });
+            loop();
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === dinoSettings.jumpKey) localDino?.jump();
+            if (e.key === dinoSettings.attackKey) localDino?.attack();
+        });
+
+        init();
+    </script>
+</body>
+</html>
