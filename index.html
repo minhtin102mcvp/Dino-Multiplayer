@@ -13,6 +13,10 @@
         canvas { display: block; background-color: #fff; border-bottom: 2px solid #535353; width: 100%; height: 100%; }
         .countdown-pulse { animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        /* Tối ưu cho mobile */
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -21,92 +25,81 @@
         
         <!-- Màn hình lỗi cấu hình -->
         <div id="error-overlay" class="hidden absolute inset-0 z-[100] bg-red-50 flex flex-col items-center justify-center p-8 text-center">
-            <h2 class="text-2xl font-bold text-red-700 mb-2">Thiếu cấu hình Firebase</h2>
-            <p class="text-gray-600 mb-6 max-w-md">Vui lòng dán mã config từ Firebase vào code để sử dụng tính năng mạng LAN.</p>
-            <button onclick="startGame('single')" class="px-6 py-2 bg-gray-800 text-white rounded-lg font-bold">Chơi Đơn (Offline)</button>
+            <h2 class="text-2xl font-bold text-red-700 mb-2">Cấu hình Firebase chưa sẵn sàng</h2>
+            <p class="text-gray-600 mb-6 max-w-md italic text-sm">Vui lòng dán mã config từ Firebase vào phần code để chơi Multiplayer. Nếu chơi offline, hãy nhấn nút bên dưới.</p>
+            <button onclick="startGame('single')" class="px-8 py-3 bg-gray-800 text-white rounded-xl font-bold shadow-lg">CHƠI ĐƠN (OFFLINE)</button>
         </div>
 
         <!-- Menu chính -->
         <div id="menu-screen" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white p-8">
-            <h1 class="text-7xl font-black mb-12 text-gray-800 tracking-tighter italic uppercase">Dino Multiplayer</h1>
+            <h1 class="text-7xl font-black mb-12 text-gray-800 tracking-tighter italic uppercase text-center">Dino Multiplayer</h1>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl">
-                <button onclick="startGame('single')" class="p-6 bg-white border-4 border-blue-500 hover:bg-blue-500 text-blue-500 hover:text-white rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 font-bold text-xl">
-                    Chơi Đơn
-                </button>
-                <button onclick="showScreen('create-room-screen')" class="p-6 bg-white border-4 border-green-500 hover:bg-green-500 text-green-500 hover:text-white rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 font-bold text-xl">
-                    Tạo Server
-                </button>
-                <button onclick="listRooms()" class="p-6 bg-white border-4 border-purple-500 hover:bg-purple-500 text-purple-500 hover:text-white rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 font-bold text-xl">
-                    Tìm Server
-                </button>
+                <button onclick="startGame('single')" class="p-6 bg-white border-4 border-blue-500 hover:bg-blue-500 text-blue-500 hover:text-white rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 font-bold text-xl uppercase">Chơi Đơn</button>
+                <button onclick="showScreen('create-room-screen')" class="p-6 bg-white border-4 border-green-500 hover:bg-green-500 text-green-500 hover:text-white rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 font-bold text-xl uppercase">Tạo Server</button>
+                <button onclick="listRooms()" class="p-6 bg-white border-4 border-purple-500 hover:bg-purple-500 text-purple-500 hover:text-white rounded-2xl shadow-lg transition-all transform hover:-translate-y-1 font-bold text-xl uppercase">Tìm Server</button>
             </div>
-            <button onclick="showScreen('settings-screen')" class="mt-12 text-gray-400 hover:text-gray-800 font-bold underline decoration-2">Tùy chỉnh nhân vật & Phím nhảy</button>
+            <button onclick="showScreen('settings-screen')" class="mt-12 text-gray-400 hover:text-gray-800 font-bold underline decoration-2">Tùy chỉnh Dino & Phím nhảy</button>
         </div>
 
         <!-- Cài đặt -->
         <div id="settings-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white p-8">
-            <h2 class="text-3xl font-black mb-6">CÀI ĐẶT</h2>
+            <h2 class="text-3xl font-black mb-6 uppercase">Cài đặt Dino</h2>
             <div class="w-full max-w-md space-y-4 bg-gray-50 p-6 rounded-2xl border-2 border-gray-200">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700">Tên người chơi</label>
-                    <input type="text" id="dino-name" value="Dino Player" class="mt-1 w-full px-4 py-2 border-2 border-gray-300 rounded-lg">
+                    <label class="block text-sm font-bold text-gray-700 uppercase">Tên hiển thị</label>
+                    <input type="text" id="dino-name" value="Player" class="mt-1 w-full px-4 py-2 border-2 border-gray-300 rounded-lg font-bold">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700">Màu sắc Dino</label>
+                    <label class="block text-sm font-bold text-gray-700 uppercase">Màu da</label>
                     <input type="color" id="dino-color" value="#535353" class="mt-1 w-full h-12 p-1 border-2 border-gray-300 rounded-lg cursor-pointer">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700">Phím Nhảy (Mặc định: Space)</label>
+                    <label class="block text-sm font-bold text-gray-700 uppercase">Phím Nhảy</label>
                     <button id="jump-key-btn" class="mt-1 w-full px-4 py-2 bg-white border-2 border-dashed border-gray-400 rounded-lg text-gray-600 font-bold">Space</button>
                 </div>
             </div>
-            <button onclick="saveSettings()" class="mt-8 px-12 py-3 bg-gray-800 text-white font-black rounded-xl hover:bg-black transition shadow-lg">LƯU THAY ĐỔI</button>
+            <button onclick="saveSettings()" class="mt-8 px-12 py-3 bg-gray-800 text-white font-black rounded-xl hover:bg-black transition shadow-lg">LƯU & QUAY LẠI</button>
         </div>
 
         <!-- Tìm phòng -->
         <div id="rooms-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white p-8">
-            <h2 class="text-3xl font-black mb-6 italic">DANH SÁCH SERVER</h2>
+            <h2 class="text-3xl font-black mb-6 italic uppercase">Danh sách Server</h2>
             <div id="room-list" class="w-full max-w-lg h-64 overflow-y-auto border-4 border-gray-100 rounded-2xl p-4 space-y-3 mb-4 bg-gray-50"></div>
             <button onclick="showScreen('menu-screen')" class="px-8 py-2 border-2 border-gray-300 rounded-lg font-bold">QUAY LẠI</button>
         </div>
 
         <!-- Tạo phòng -->
         <div id="create-room-screen" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white p-8">
-            <h2 class="text-3xl font-black mb-6 italic text-center uppercase">Thiết lập Server</h2>
+            <h2 class="text-3xl font-black mb-6 italic text-center uppercase">Khởi tạo Server</h2>
             <div class="w-full max-w-sm space-y-4">
-                <input type="text" id="room-name" placeholder="Tên phòng..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl font-bold">
-                <input type="password" id="room-pass" placeholder="Mật khẩu (không bắt buộc)" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl font-bold">
-                <button onclick="handleCreateRoom()" class="w-full py-4 bg-green-500 text-white font-black rounded-xl shadow-lg hover:bg-green-600">MỞ PHÒNG CHỜ</button>
+                <input type="text" id="room-name" placeholder="Đặt tên phòng của bạn..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl font-bold shadow-inner">
+                <button onclick="handleCreateRoom()" class="w-full py-4 bg-green-500 text-white font-black rounded-xl shadow-lg hover:bg-green-600 uppercase tracking-wider">Tạo Phòng Chờ</button>
             </div>
             <button onclick="showScreen('menu-screen')" class="mt-6 text-gray-400 hover:text-black font-bold underline">HỦY BỎ</button>
         </div>
 
         <!-- Màn hình chơi game -->
         <div id="game-container" class="relative flex-grow flex flex-col hidden">
-            <!-- Game Header -->
             <div class="flex justify-between items-center p-4 bg-gray-50 border-b-2 border-gray-800 z-10">
-                <div id="game-status" class="font-black text-gray-800 bg-yellow-300 px-3 py-1 rounded border-2 border-black text-xs uppercase">Trạng Thái</div>
+                <div id="game-status" class="font-black text-gray-800 bg-yellow-300 px-3 py-1 rounded border-2 border-black text-xs uppercase shadow-sm">Kết nối...</div>
                 <div id="live-leaderboard" class="flex gap-4 text-xs font-mono font-bold text-blue-800"></div>
                 <div class="text-2xl font-mono font-black" id="score-display">00000</div>
             </div>
 
-            <!-- Canvas Area -->
             <div class="relative flex-grow bg-white overflow-hidden">
                 <canvas id="gameCanvas"></canvas>
 
                 <!-- Lobby Overlay -->
                 <div id="lobby-overlay" class="absolute inset-0 bg-black/5 flex flex-col items-center justify-center z-20">
                     <div class="bg-white p-8 rounded-2xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center w-full max-w-md">
-                        <h3 class="text-2xl font-black mb-6 uppercase tracking-widest italic">Sảnh Đợi</h3>
-                        <div id="lobby-players" class="mb-6 space-y-2 max-h-40 overflow-y-auto p-2">
-                            <!-- Players state here -->
-                        </div>
+                        <h3 class="text-2xl font-black mb-6 uppercase tracking-widest italic border-b-4 border-gray-100 pb-2">PHÒNG CHỜ</h3>
+                        <div id="lobby-players" class="mb-6 space-y-2 max-h-40 overflow-y-auto p-2"></div>
                         <div class="flex gap-4 justify-center">
                             <button id="ready-btn" onclick="toggleReady()" class="px-8 py-3 bg-blue-500 text-white font-black rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all">SẴN SÀNG</button>
                             <button id="start-btn" onclick="requestStart()" class="hidden px-8 py-3 bg-green-500 text-white font-black rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:grayscale">BẮT ĐẦU</button>
                         </div>
-                        <p id="start-hint" class="mt-4 text-xs font-bold text-gray-400">Cần ít nhất 2 người và tất cả phải sẵn sàng</p>
+                        <p id="start-hint" class="mt-4 text-xs font-bold text-gray-400 italic">Cần ít nhất 2 người và tất cả phải sẵn sàng</p>
                     </div>
                 </div>
 
@@ -118,14 +111,12 @@
                 <!-- Game Over / Leaderboard Overlay -->
                 <div id="final-results-overlay" class="hidden absolute inset-0 z-40 bg-black/80 flex flex-col items-center justify-center p-8">
                     <div class="bg-white p-8 rounded-3xl border-8 border-gray-800 w-full max-w-md shadow-2xl">
-                        <h2 class="text-4xl font-black text-center mb-6 italic uppercase tracking-tighter">BẢNG VÀNG</h2>
-                        <div id="ranking-list" class="space-y-4 mb-8 font-mono">
-                            <!-- Ranked players -->
-                        </div>
+                        <h2 class="text-4xl font-black text-center mb-6 italic uppercase tracking-tighter">BẢNG XẾP HẠNG</h2>
+                        <div id="ranking-list" class="space-y-4 mb-8 font-mono"></div>
                         <div class="flex flex-col gap-3">
                             <button id="replay-btn" onclick="requestReplay()" class="hidden w-full py-4 bg-blue-600 text-white font-black rounded-2xl border-4 border-black text-xl hover:bg-blue-700 transition">CHƠI TIẾP</button>
-                            <p id="wait-msg" class="text-center text-gray-500 font-bold animate-pulse italic">Chờ các đối thủ khác tử trận...</p>
-                            <button onclick="exitGame()" class="w-full text-gray-400 font-bold underline">Thoát ra Menu</button>
+                            <p id="wait-msg" class="text-center text-gray-500 font-bold animate-pulse italic">Chờ các đối thủ khác về đích...</p>
+                            <button onclick="exitGame()" class="w-full text-gray-400 font-bold underline mt-2">Thoát ra Menu</button>
                         </div>
                     </div>
                 </div>
@@ -141,12 +132,21 @@
         // --- Firebase Init ---
         let db, auth, appId;
         try {
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+            // LƯU Ý: Dán mã config lấy từ Firebase Console vào {} bên dưới
+            const firebaseConfig = {
+  apiKey: "AIzaSyCP12lFX-vh7hI1Cr5VVf09sb7q1S2U2_c",
+  authDomain: "dino-multiplayer-c62b5.firebaseapp.com",
+  projectId: "dino-multiplayer-c62b5",
+  storageBucket: "dino-multiplayer-c62b5.firebasestorage.app",
+  messagingSenderId: "25655717120",
+  appId: "1:25655717120:web:12aa999f4bb162546417e5",
+  measurementId: "G-XD5GP5HT2Q"
+};
             if (!firebaseConfig.apiKey) throw new Error();
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'dino-mp-v1';
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'dino-mp-v2';
         } catch (e) {
             document.getElementById('error-overlay').classList.remove('hidden');
         }
@@ -160,6 +160,7 @@
         let roomData = {};
         let gameState = 'lobby'; 
         let lastSpeedScore = 0;
+        let syncThrottleTimer = 0;
 
         const GRAVITY = 0.6;
         const JUMP_FORCE = -12;
@@ -201,7 +202,7 @@
         class Obstacle {
             constructor(x, type) {
                 this.x = x;
-                this.type = type; // 0,1: Cactus, 2,3: Birds
+                this.type = type; 
                 this.w = (type < 2) ? (type === 0 ? 20 : 35) : 40;
                 this.h = (type < 2) ? (type === 0 ? 35 : 50) : 30;
                 this.y = (type < 2) ? (GROUND_Y - this.h) : (type === 2 ? GROUND_Y - 40 : GROUND_Y - 85);
@@ -227,13 +228,21 @@
                 }
                 onAuthStateChanged(auth, u => user = u);
             }
-            const saved = localStorage.getItem('dino_mp_settings');
+            const saved = localStorage.getItem('dino_mp_settings_v2');
             if (saved) {
                 dinoSettings = JSON.parse(saved);
                 document.getElementById('dino-name').value = dinoSettings.name;
                 document.getElementById('dino-color').value = dinoSettings.color;
                 document.getElementById('jump-key-btn').innerText = dinoSettings.jumpKey === " " ? "Space" : dinoSettings.jumpKey;
             }
+            
+            // Xóa dữ liệu khi thoát
+            window.addEventListener('beforeunload', async () => {
+                if (currentRoomId && user) {
+                    const r = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'players', user.uid);
+                    await deleteDoc(r);
+                }
+            });
         }
 
         window.showScreen = (id) => {
@@ -244,12 +253,12 @@
         window.saveSettings = () => {
             dinoSettings.name = document.getElementById('dino-name').value || "Dino Player";
             dinoSettings.color = document.getElementById('dino-color').value;
-            localStorage.setItem('dino_mp_settings', JSON.stringify(dinoSettings));
+            localStorage.setItem('dino_mp_settings_v2', JSON.stringify(dinoSettings));
             showScreen('menu-screen');
         };
 
         document.getElementById('jump-key-btn').onclick = function() {
-            this.innerText = "...";
+            this.innerText = "Ấn phím...";
             const h = (e) => {
                 e.preventDefault();
                 dinoSettings.jumpKey = e.key;
@@ -291,7 +300,6 @@
                     lastObstacleTime = Date.now();
                 }
 
-                // --- ACCELERATION LOGIC: 1.1x per 100 points ---
                 let currentHundred = Math.floor(localDino.score / 100);
                 if (currentHundred > lastSpeedScore) {
                     lastSpeedScore = currentHundred;
@@ -310,7 +318,11 @@
                 if (o.x < -100) obstacles.splice(i, 1);
             });
 
-            if (currentRoomId && db) syncPlayerData();
+            // Throttle sync data (Gửi 10 lần mỗi giây để giảm lag)
+            if (currentRoomId && db && Date.now() - syncThrottleTimer > 100) {
+                syncPlayerData();
+                syncThrottleTimer = Date.now();
+            }
 
             Object.values(otherPlayers).forEach(p => {
                 if (p.uid === user?.uid) return;
@@ -339,7 +351,7 @@
                 showFinalResults();
             } else {
                 gameState = 'waiting_result';
-                document.getElementById('game-status').innerText = "TỬ TRẬN";
+                document.getElementById('game-status').innerText = "K.O";
             }
         }
 
@@ -372,41 +384,44 @@
                     clearInterval(itv);
                     document.getElementById('countdown-overlay').classList.add('hidden');
                     gameState = 'playing';
-                    document.getElementById('game-status').innerText = "ĐANG CHẠY";
+                    document.getElementById('game-status').innerText = "RUNNING";
                     lastObstacleTime = Date.now();
                 }
             }, 1000);
         }
 
         window.handleCreateRoom = async () => {
-            const name = document.getElementById('room-name').value || "Server Pro";
-            const pass = document.getElementById('room-pass').value;
+            if (!db) return;
+            const name = document.getElementById('room-name').value || "Phòng Đua";
             const ref = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), { 
-                name, pass, hostId: user.uid, status: 'lobby', createdAt: serverTimestamp() 
+                name, hostId: user.uid, status: 'lobby', createdAt: serverTimestamp() 
             });
             currentRoomId = ref.id; isHost = true;
             setupRoomObserver();
         };
 
         window.listRooms = () => {
+            if (!db) return;
             showScreen('rooms-screen');
-            const thirtyMinsAgo = Date.now() - (30 * 60 * 1000);
+            const twentyMinsAgo = Date.now() - (20 * 60 * 1000);
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), snap => {
                 const list = document.getElementById('room-list'); list.innerHTML = "";
+                let count = 0;
                 snap.forEach(d => {
                     const data = d.data();
-                    if ((data.createdAt?.toMillis() || Date.now()) > thirtyMinsAgo) {
+                    if ((data.createdAt?.toMillis() || Date.now()) > twentyMinsAgo) {
                         const div = document.createElement('div');
                         div.className = "flex justify-between bg-white p-4 rounded-xl border-2 border-gray-100 shadow-sm hover:border-black transition cursor-pointer";
-                        div.innerHTML = `<div class="font-bold text-gray-800">${data.name}</div><button onclick="joinRoom('${d.id}', '${data.pass}')" class="text-blue-600 font-black">THAM GIA</button>`;
+                        div.innerHTML = `<div class="font-bold text-gray-800 uppercase">${data.name}</div><button onclick="joinRoom('${d.id}')" class="text-blue-600 font-black">VÀO</button>`;
                         list.appendChild(div);
+                        count++;
                     }
                 });
+                if (count === 0) list.innerHTML = "<p class='text-center italic text-gray-400 mt-20'>Không có phòng nào hoạt động.</p>";
             });
         };
 
-        window.joinRoom = (id, pass) => {
-            if (pass && prompt("Mật khẩu phòng:") !== pass) return;
+        window.joinRoom = (id) => {
             currentRoomId = id; isHost = false;
             setupRoomObserver();
         };
@@ -415,6 +430,7 @@
             showScreen('game-container');
             resetEngine();
             onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), d => {
+                if (!d.exists()) { exitGame(); return; }
                 roomData = d.data();
                 if (roomData.status === 'countdown' && gameState === 'lobby') {
                     document.getElementById('lobby-overlay').classList.add('hidden');
@@ -423,7 +439,7 @@
                 if (roomData.status === 'lobby' && (gameState === 'result' || gameState === 'waiting_result')) {
                     resetEngine();
                     document.getElementById('lobby-overlay').classList.remove('hidden');
-                    document.getElementById('game-status').innerText = "PHÒNG CHỜ";
+                    document.getElementById('game-status').innerText = "SẢNH";
                     document.getElementById('ready-btn').innerText = "SẴN SÀNG";
                     document.getElementById('ready-btn').className = "px-8 py-3 bg-blue-500 text-white font-black rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]";
                 }
@@ -442,8 +458,8 @@
                     const lobbyDiv = document.getElementById('lobby-players');
                     lobbyDiv.innerHTML = playersList.map(p => `
                         <div class="flex justify-between font-bold border-b pb-1 ${p.uid === user.uid ? 'text-blue-600' : 'text-gray-600'}">
-                            <span>${p.name} ${p.uid === roomData.hostId ? '👑' : ''}</span>
-                            <span class="text-sm italic">${p.isReady ? '✅ Sẵn sàng' : '... Chờ'}</span>
+                            <span>${p.name} ${p.uid === roomData.hostId ? '⭐' : ''}</span>
+                            <span class="text-sm font-black uppercase text-xs">${p.isReady ? '<span class="text-green-500">READY</span>' : '<span class="text-gray-300">WAIT</span>'}</span>
                         </div>
                     `).join('');
                     if (isHost) {
@@ -469,10 +485,10 @@
         window.toggleReady = () => {
             localDino.isReady = !localDino.isReady;
             const btn = document.getElementById('ready-btn');
-            btn.innerText = localDino.isReady ? "HỦY SẴN SÀNG" : "SẴN SÀNG";
+            btn.innerText = localDino.isReady ? "HỦY" : "SẴN SÀNG";
             btn.className = localDino.isReady ? "px-8 py-3 bg-red-500 text-white font-black rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" : "px-8 py-3 bg-blue-500 text-white font-black rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]";
             syncPlayerData();
-        };
+        }
 
         window.requestStart = async () => {
             if (!isHost) return;
@@ -486,7 +502,14 @@
             syncPlayerData();
         };
 
-        window.exitGame = () => location.reload();
+        window.exitGame = () => {
+            if (currentRoomId && user) {
+                const r = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'players', user.uid);
+                deleteDoc(r).then(() => location.reload());
+            } else {
+                location.reload();
+            }
+        };
 
         window.addEventListener('keydown', e => {
             if (e.key === dinoSettings.jumpKey) localDino?.jump();
